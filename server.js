@@ -6,6 +6,7 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const teacherRoutes = require('./routes/teachersRoutes');
 const { errorHandler } = require('./middleware/errorMiddleware');
 const { testConnection } = require('./config/database');
 
@@ -25,6 +26,7 @@ app.use(express.urlencoded({ extended: true }));
 // Routes
 app.use('/api/v1', authRoutes);
 app.use('/api/v1', dashboardRoutes);
+app.use('/api/v1/teacher', teacherRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {
@@ -61,6 +63,7 @@ const startServer = async () => {
       console.log(`   - Teacher Auth: POST /api/v1/teacher/signup, POST /api/v1/teacher/login`);
       console.log(`   - Student Profile: GET /api/v1/student/profile/:studentID`);
       console.log(`   - Student Subjects: GET /api/v1/student/subjects/:standard/:division`);
+      console.log(`   - Teacher Subjects: POST /api/v1/teacher/subjects, GET /api/v1/teacher/subjects`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error.message);
