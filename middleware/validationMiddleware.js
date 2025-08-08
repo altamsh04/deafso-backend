@@ -106,6 +106,63 @@ const validateStandardDivision = [
   handleValidationErrors
 ];
 
+// Subject validation
+const validateSubject = [
+  body('subjectName')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Subject name must be between 2 and 100 characters'),
+  body('standard')
+    .isIn(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'])
+    .withMessage('Standard must be between 1 and 12'),
+  body('division')
+    .isLength({ min: 1, max: 5 })
+    .withMessage('Division must be between 1 and 5 characters'),
+  body('duration')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Duration must be a non-negative integer'),
+  body('content')
+    .optional()
+    .isLength({ max: 10000 })
+    .withMessage('Content must be less than 10000 characters'),
+  handleValidationErrors
+];
+
+// Subject update validation
+const validateSubjectUpdate = [
+  body('subjectName')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Subject name must be between 2 and 100 characters'),
+  body('standard')
+    .optional()
+    .isIn(['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'])
+    .withMessage('Standard must be between 1 and 12'),
+  body('division')
+    .optional()
+    .isLength({ min: 1, max: 5 })
+    .withMessage('Division must be between 1 and 5 characters'),
+  body('duration')
+    .optional()
+    .isInt({ min: 0 })
+    .withMessage('Duration must be a non-negative integer'),
+  body('content')
+    .optional()
+    .isLength({ max: 10000 })
+    .withMessage('Content must be less than 10000 characters'),
+  handleValidationErrors
+];
+
+// Subject ID parameter validation
+const validateSubjectId = [
+  param('subjectId')
+    .isInt({ min: 1 })
+    .withMessage('Subject ID must be a positive integer'),
+  handleValidationErrors
+];
+
 module.exports = {
   validateStudentSignup,
   validateStudentLogin,
@@ -113,5 +170,8 @@ module.exports = {
   validateTeacherLogin,
   validateStudentId,
   validateStandardDivision,
+  validateSubject,
+  validateSubjectUpdate,
+  validateSubjectId,
   handleValidationErrors
 }; 
