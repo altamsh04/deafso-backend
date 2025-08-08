@@ -1,96 +1,213 @@
-# DeafSo Backend API Examples
+# DeafSo Backend API Documentation
 
-This file contains practical examples of how to use the DeafSo Backend API endpoints.
-
-## 🔐 Authentication Endpoints
-
-### Student Signup
-```bash
-curl -X POST http://localhost:3000/api/v1/student/signup \
-  -H "Content-Type: application/json" \
-  -d '{
-    "fullname": "John Doe",
-    "email": "john.doe@student.com",
-    "mobile": "9876543210",
-    "password": "password123",
-    "standard": "10",
-    "division": "A",
-    "rollnumber": "10A001"
-  }'
+## Base URL
+```
+http://localhost:3000/api/v1
 ```
 
-### Student Login
-```bash
-curl -X POST http://localhost:3000/api/v1/student/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john.doe@student.com",
-    "password": "password123"
-  }'
+## Authentication
+All teacher endpoints require authentication using Bearer token in the Authorization header:
+```
+Authorization: Bearer <teacher_jwt_token>
 ```
 
-### Teacher Signup
-```bash
-curl -X POST http://localhost:3000/api/v1/teacher/signup \
-  -H "Content-Type: application/json" \
-  -d '{
-    "fullname": "Jane Smith",
-    "email": "jane.smith@teacher.com",
-    "mobile": "9876543211",
-    "password": "password123"
-  }'
+## Teacher Subject Management Endpoints
+
+### Understanding teacherId
+
+**Important**: You do NOT need to pass `teacherId` in the request body. The `teacherId` is automatically extracted from the JWT token when the teacher is authenticated.
+
+#### How teacherId Works:
+
+1. **Authentication**: When a teacher logs in, they receive a JWT token
+2. **Token Decoding**: The token contains the teacher's ID
+3. **Automatic Extraction**: The `authenticateTeacher` middleware automatically extracts the teacher's ID from the token
+4. **Request Object**: The teacher's ID is available as `req.teacher.id` in the controller
+5. **Database Association**: Subjects are automatically associated with the authenticated teacher
+
+#### Example Flow:
+```
+1. Teacher Login → Get JWT Token
+2. Include Token in Request Header → Authorization: Bearer <token>
+3. Middleware Decodes Token → Extracts teacherId
+4. Controller Uses teacherId → req.teacher.id
+5. Subject Created → Associated with teacher automatically
 ```
 
-### Teacher Login
-```bash
-curl -X POST http://localhost:3000/api/v1/teacher/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "jane.smith@teacher.com",
-    "password": "password123"
-  }'
+#### ❌ What NOT to do (Don't include teacherId in body):
+```json
+{
+  "subjectName": "Mathematics",
+  "standard": "10",
+  "division": "A",
+  "teacherId": 1  // ❌ DON'T include this
+}
 ```
 
-## 📊 Dashboard Endpoints
-
-### Get Student Profile
-```bash
-# First, get the JWT token from login response
-TOKEN="your_jwt_token_here"
-STUDENT_ID="1"
-
-curl -X GET http://localhost:3000/api/v1/student/profile/$STUDENT_ID \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json"
+#### ✅ What TO do (Correct way):
+```json
+{
+  "subjectName": "Mathematics",
+  "standard": "10",
+  "division": "A"
+}
 ```
 
-**Response:**
+**Headers (Required):**
+```
+Authorization: Bearer your_jwt_token_here
+Content-Type: application/json
+```
+
+### 1. Add a New Subject
+**POST** `/teacher/subjects`
+
+Add a new subject to the database. Only authenticated teachers can add subjects. The `teacherId` is automatically extracted from the JWT token.
+
+#### Demo Request Bodies
+
+**Example 1: Mathematics Subject**
+```json
+{
+  "subjectName": "Mathematics",
+  "standard": "10",
+  "division": "A",
+  "duration": 60,
+  "content": "Advanced mathematics concepts including algebra, geometry, and trigonometry. Topics covered: Quadratic equations, coordinate geometry, trigonometry, statistics, and probability."
+}
+```
+
+**Example 2: Physics Subject**
+```json
+{
+  "subjectName": "Physics",
+  "standard": "12",
+  "division": "B",
+  "duration": 75,
+  "content": "Advanced physics concepts including mechanics, thermodynamics, electromagnetism, and modern physics. Practical experiments and problem-solving exercises included."
+}
+```
+
+**Example 3: English Literature**
+```json
+{
+  "subjectName": "English Literature",
+  "standard": "11",
+  "division": "C",
+  "duration": 45,
+  "content": "Study of classic and contemporary literature. Reading comprehension, essay writing, poetry analysis, and creative writing skills development."
+}
+```
+
+**Example 4: Computer Science**
+```json
+{
+  "subjectName": "Computer Science",
+  "standard": "9",
+  "division": "A",
+  "duration": 90,
+  "content": "Introduction to programming concepts, algorithms, data structures, and software development. Hands-on coding projects and problem-solving exercises."
+}
+```
+
+**Example 5: Chemistry (Minimal Content)**
+```json
+{
+  "subjectName": "Chemistry",
+  "standard": "8",
+  "division": "B",
+  "duration": 50
+}
+```
+
+**Example 6: History (Long Content)**
+```json
+{
+  "subjectName": "History",
+  "standard": "7",
+  "division": "A",
+  "duration": 40,
+  "content": "Comprehensive study of world history from ancient civilizations to modern times. Topics include: Ancient Egypt, Greek and Roman civilizations, Medieval period, Renaissance, Industrial Revolution, World Wars, and contemporary history. Students will develop critical thinking skills through analysis of historical events, primary sources, and cultural developments."
+}
+```
+
+#### Required vs Optional Fields
+
+**Required Fields:**
+- `subjectName` (string, 2-100 characters)
+- `standard` (string, must be "1" through "12")
+- `division` (string, 1-5 characters)
+
+**Optional Fields:**
+- `duration` (integer, default: 0, min: 0)
+- `content` (string, max: 10000 characters, default: null)
+
+**Note**: `teacherId` is NOT required in the request body - it's automatically extracted from the JWT token.
+
+#### Validation Rules
+
+| Field | Type | Required | Min Length | Max Length | Format/Values | Source |
+|-------|------|----------|------------|------------|---------------|--------|
+| subjectName | string | ✅ | 2 | 100 | Any text | Request Body |
+| standard | string | ✅ | - | - | "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12" | Request Body |
+| division | string | ✅ | 1 | 5 | Any text | Request Body |
+| duration | integer | ❌ | - | - | Non-negative integer | Request Body |
+| content | string | ❌ | - | 10000 | Any text | Request Body |
+| teacherId | integer | ✅ | - | - | Positive integer | JWT Token (Auto) |
+
+**Response (201 Created):**
 ```json
 {
   "success": true,
-  "message": "Student profile retrieved successfully",
+  "message": "Subject added successfully",
   "data": {
     "id": 1,
-    "fullname": "John Doe",
-    "email": "john.doe@student.com",
-    "mobile": "9876543210",
+    "subjectName": "Mathematics",
     "standard": "10",
     "division": "A",
-    "rollnumber": "10A001",
-    "created_at": "2025-08-07T17:02:07.900Z",
-    "updated_at": "2025-08-07T17:02:07.900Z"
+    "duration": 60,
+    "content": "Advanced mathematics concepts including algebra, geometry, and trigonometry.",
+    "teacher": {
+      "id": 1,
+      "fullname": "John Doe",
+      "email": "john.doe@school.com"
+    }
   }
 }
 ```
 
-### Get Student Subjects
-```bash
-curl -X GET http://localhost:3000/api/v1/student/subjects/10/A \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json"
+**Validation Errors (400 Bad Request):**
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "subjectName",
+      "message": "Subject name must be between 2 and 100 characters"
+    },
+    {
+      "field": "standard",
+      "message": "Standard must be between 1 and 12"
+    }
+  ]
+}
 ```
 
-**Response:**
+**Duplicate Subject Error (400 Bad Request):**
+```json
+{
+  "success": false,
+  "message": "Subject already exists for this standard and division"
+}
+```
+
+### 2. Get All Teacher's Subjects
+**GET** `/teacher/subjects`
+
+Retrieve all subjects created by the authenticated teacher.
+
+**Response (200 OK):**
 ```json
 {
   "success": true,
@@ -99,127 +216,129 @@ curl -X GET http://localhost:3000/api/v1/student/subjects/10/A \
     {
       "id": 1,
       "subjectName": "Mathematics",
-      "duration": 45,
-      "views": 150,
-      "content": "Advanced mathematics concepts including algebra and geometry",
+      "standard": "10",
+      "division": "A",
+      "duration": 60,
+      "content": "Advanced mathematics concepts...",
+      "views": 0,
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z",
       "teacher": {
         "id": 1,
-        "name": "John Doe",
-        "email": "john.doe@deafso.com"
-      },
-      "created_at": "2025-08-07T17:02:07.900Z",
-      "updated_at": "2025-08-07T17:02:07.900Z"
+        "fullname": "John Doe",
+        "email": "john.doe@school.com"
+      }
     }
-  ],
-  "count": 1
+  ]
 }
 ```
 
-### Get Teacher Profile
-```bash
-TEACHER_ID="1"
+### 3. Get Subject by ID
+**GET** `/teacher/subjects/:subjectId`
 
-curl -X GET http://localhost:3000/api/v1/teacher/profile/$TEACHER_ID \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json"
-```
+Retrieve a specific subject by ID. Only the teacher who created the subject can access it.
 
-### Get Students in Class
-```bash
-curl -X GET http://localhost:3000/api/v1/class/10/A/students \
-  -H "Content-Type: application/json"
-```
-
-### Get Subject Details
-```bash
-SUBJECT_ID="1"
-
-curl -X GET http://localhost:3000/api/v1/subject/$SUBJECT_ID \
-  -H "Content-Type: application/json"
-```
-
-## 🔍 Complete Workflow Example
-
-### Step 1: Student Signup
-```bash
-curl -X POST http://localhost:3000/api/v1/student/signup \
-  -H "Content-Type: application/json" \
-  -d '{
-    "fullname": "Alice Johnson",
-    "email": "alice@example.com",
-    "mobile": "9876543220",
-    "password": "password123",
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Subject retrieved successfully",
+  "data": {
+    "id": 1,
+    "subjectName": "Mathematics",
     "standard": "10",
     "division": "A",
-    "rollnumber": "10A002"
-  }'
+    "duration": 60,
+    "content": "Advanced mathematics concepts...",
+    "views": 0,
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T10:30:00.000Z",
+    "teacher": {
+      "id": 1,
+      "fullname": "John Doe",
+      "email": "john.doe@school.com"
+    }
+  }
+}
 ```
 
-### Step 2: Extract Token from Response
-```bash
-# Save the token from the signup response
-TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-STUDENT_ID="2"
-```
-
-### Step 3: Get Student Profile
-```bash
-curl -X GET http://localhost:3000/api/v1/student/profile/$STUDENT_ID \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" | jq .
-```
-
-### Step 4: Get Student Subjects
-```bash
-curl -X GET http://localhost:3000/api/v1/student/subjects/10/A \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json" | jq .
-```
-
-## 🧪 Testing with jq (JSON Formatter)
-
-Install jq for better JSON formatting:
-```bash
-# Ubuntu/Debian
-sudo apt install jq
-
-# macOS
-brew install jq
-
-# Windows (with chocolatey)
-choco install jq
-```
-
-Then use it with your API calls:
-```bash
-curl -X GET http://localhost:3000/api/v1/student/profile/1 \
-  -H "Authorization: Bearer $TOKEN" | jq .
-```
-
-## 🔒 Error Handling Examples
-
-### Invalid Token
-```bash
-curl -X GET http://localhost:3000/api/v1/student/profile/1 \
-  -H "Authorization: Bearer invalid_token" \
-  -H "Content-Type: application/json"
-```
-
-**Response:**
+**Not Found Error (404):**
 ```json
 {
   "success": false,
-  "message": "Invalid token."
+  "message": "Subject not found"
 }
 ```
 
-### Missing Authentication
-```bash
-curl -X GET http://localhost:3000/api/v1/student/profile/1 \
-  -H "Content-Type: application/json"
+### 4. Update Subject
+**PUT** `/teacher/subjects/:subjectId`
+
+Update an existing subject. Only the teacher who created the subject can update it.
+
+**Request Body (all fields optional):**
+```json
+{
+  "subjectName": "Advanced Mathematics",
+  "standard": "11",
+  "division": "B",
+  "duration": 90,
+  "content": "Updated content with more advanced topics."
+}
 ```
 
-**Response:**
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Subject updated successfully",
+  "data": {
+    "id": 1,
+    "subjectName": "Advanced Mathematics",
+    "standard": "11",
+    "division": "B",
+    "duration": 90,
+    "content": "Updated content with more advanced topics.",
+    "views": 0,
+    "createdAt": "2024-01-15T10:30:00.000Z",
+    "updatedAt": "2024-01-15T11:45:00.000Z",
+    "teacher": {
+      "id": 1,
+      "fullname": "John Doe",
+      "email": "john.doe@school.com"
+    }
+  }
+}
+```
+
+### 5. Delete Subject
+**DELETE** `/teacher/subjects/:subjectId`
+
+Delete a subject. Only the teacher who created the subject can delete it.
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "message": "Subject deleted successfully"
+}
+```
+
+## Field Validation Rules
+
+### Subject Fields:
+- **subjectName**: Required, 2-100 characters
+- **standard**: Required, must be one of: "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"
+- **division**: Required, 1-5 characters
+- **duration**: Optional, non-negative integer (default: 0)
+- **content**: Optional, max 10000 characters
+
+### Unique Constraints:
+- Subject name must be unique per standard and division combination
+- Teachers can only access/modify their own subjects
+
+## Error Responses
+
+### Authentication Errors (401 Unauthorized):
 ```json
 {
   "success": false,
@@ -227,112 +346,643 @@ curl -X GET http://localhost:3000/api/v1/student/profile/1 \
 }
 ```
 
-### Invalid Student ID
-```bash
-curl -X GET http://localhost:3000/api/v1/student/profile/99999 \
-  -H "Authorization: Bearer $TOKEN" \
-  -H "Content-Type: application/json"
-```
-
-**Response:**
 ```json
 {
   "success": false,
-  "message": "Student not found"
+  "message": "Invalid or expired token."
 }
 ```
 
-## 📱 Frontend Integration Examples
-
-### JavaScript/Fetch API
-```javascript
-// Student login
-const loginStudent = async (email, password) => {
-  const response = await fetch('http://localhost:3000/api/v1/student/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email, password })
-  });
-  
-  const data = await response.json();
-  return data;
-};
-
-// Get student profile
-const getStudentProfile = async (studentId, token) => {
-  const response = await fetch(`http://localhost:3000/api/v1/student/profile/${studentId}`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    }
-  });
-  
-  const data = await response.json();
-  return data;
-};
+### Server Errors (500 Internal Server Error):
+```json
+{
+  "success": false,
+  "message": "Internal server error"
+}
 ```
 
-### Axios Example
-```javascript
-import axios from 'axios';
+## Example Usage with cURL
 
-const api = axios.create({
-  baseURL: 'http://localhost:3000/api/v1',
-  headers: {
-    'Content-Type': 'application/json',
-  }
-});
+### Add a new subject:
 
-// Add token to requests
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
-
-// Student profile API
-export const getStudentProfile = (studentId) => {
-  return api.get(`/student/profile/${studentId}`);
-};
-
-// Student subjects API
-export const getStudentSubjects = (standard, division) => {
-  return api.get(`/student/subjects/${standard}/${division}`);
-};
-```
-
-## 🚀 Environment Variables
-
-Set up your environment for easier testing:
+**Basic CURL Request (Mathematics):**
 ```bash
-# Set base URL
-export API_BASE="http://localhost:3000/api/v1"
+curl -X POST http://localhost:3000/api/v1/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "subjectName": "Mathematics",
+    "standard": "10",
+    "division": "A",
+    "duration": 60,
+    "content": "Advanced mathematics concepts including algebra, geometry, and trigonometry."
+  }'
+```
 
-# Set token (after login)
+**Physics Subject:**
+```bash
+curl -X POST http://localhost:3000/api/v1/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "subjectName": "Physics",
+    "standard": "12",
+    "division": "B",
+    "duration": 75,
+    "content": "Advanced physics concepts including mechanics, thermodynamics, electromagnetism, and modern physics. Practical experiments and problem-solving exercises included."
+  }'
+```
+
+**English Literature:**
+```bash
+curl -X POST http://localhost:3000/api/v1/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "subjectName": "English Literature",
+    "standard": "11",
+    "division": "C",
+    "duration": 45,
+    "content": "Study of classic and contemporary literature. Reading comprehension, essay writing, poetry analysis, and creative writing skills development."
+  }'
+```
+
+**Computer Science:**
+```bash
+curl -X POST http://localhost:3000/api/v1/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "subjectName": "Computer Science",
+    "standard": "9",
+    "division": "A",
+    "duration": 90,
+    "content": "Introduction to programming concepts, algorithms, data structures, and software development. Hands-on coding projects and problem-solving exercises."
+  }'
+```
+
+**Chemistry (Minimal Content):**
+```bash
+curl -X POST http://localhost:3000/api/v1/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "subjectName": "Chemistry",
+    "standard": "8",
+    "division": "B",
+    "duration": 50
+  }'
+```
+
+**History (Long Content):**
+```bash
+curl -X POST http://localhost:3000/api/v1/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "subjectName": "History",
+    "standard": "7",
+    "division": "A",
+    "duration": 40,
+    "content": "Comprehensive study of world history from ancient civilizations to modern times. Topics include: Ancient Egypt, Greek and Roman civilizations, Medieval period, Renaissance, Industrial Revolution, World Wars, and contemporary history. Students will develop critical thinking skills through analysis of historical events, primary sources, and cultural developments."
+  }'
+```
+
+### Using Variables for Easier Testing:
+
+**Set up environment variables:**
+```bash
+# Set your JWT token
 export TOKEN="your_jwt_token_here"
 
-# Use in requests
-curl -X GET $API_BASE/student/profile/1 \
-  -H "Authorization: Bearer $TOKEN"
+# Set base URL
+export API_BASE="http://localhost:3000/api/v1"
 ```
 
-## 📋 Health Check
-
-Test if the API is running:
+**Then use the variables:**
 ```bash
-curl http://localhost:3000/health
+curl -X POST $API_BASE/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "subjectName": "Biology",
+    "standard": "11",
+    "division": "A",
+    "duration": 65,
+    "content": "Study of living organisms, their structure, function, growth, evolution, and distribution. Topics include cell biology, genetics, ecology, and human anatomy."
+  }'
+```
+
+### Testing with Different Scenarios:
+
+**1. Required Fields Only:**
+```bash
+curl -X POST http://localhost:3000/api/v1/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "subjectName": "Geography",
+    "standard": "6",
+    "division": "B"
+  }'
+```
+
+**2. With All Optional Fields:**
+```bash
+curl -X POST http://localhost:3000/api/v1/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "subjectName": "Art & Design",
+    "standard": "9",
+    "division": "C",
+    "duration": 80,
+    "content": "Creative arts and design principles. Students will explore various mediums including drawing, painting, sculpture, and digital art. Focus on developing artistic skills, creativity, and appreciation for different art forms and cultural expressions."
+  }'
+```
+
+**3. Using a JSON file:**
+```bash
+# Create a file named subject.json
+echo '{
+  "subjectName": "Economics",
+  "standard": "12",
+  "division": "A",
+  "duration": 70,
+  "content": "Study of economic principles, market structures, supply and demand, monetary policy, and international trade. Students will analyze economic data and develop critical thinking skills for economic decision-making."
+}' > subject.json
+
+# Use the file in the request
+curl -X POST http://localhost:3000/api/v1/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d @subject.json
+```
+
+### Error Testing Examples:
+
+**1. Missing Required Field:**
+```bash
+curl -X POST http://localhost:3000/api/v1/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "subjectName": "Mathematics",
+    "standard": "10"
+  }'
+```
+
+**2. Invalid Standard:**
+```bash
+curl -X POST http://localhost:3000/api/v1/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "subjectName": "Mathematics",
+    "standard": "13",
+    "division": "A"
+  }'
+```
+
+**3. Missing Authentication:**
+```bash
+curl -X POST http://localhost:3000/api/v1/teacher/subjects \
+  -H "Content-Type: application/json" \
+  -d '{
+    "subjectName": "Mathematics",
+    "standard": "10",
+    "division": "A"
+  }'
+```
+
+### Get all teacher's subjects:
+```bash
+curl -X GET http://localhost:3000/api/v1/teacher/subjects \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### Update a subject:
+```bash
+curl -X PUT http://localhost:3000/api/v1/teacher/subjects/1 \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{
+    "duration": 90,
+    "content": "Updated physics content with more practical examples."
+  }'
+```
+
+### Delete a subject:
+```bash
+curl -X DELETE http://localhost:3000/api/v1/teacher/subjects/1 \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+``` 
+
+## Postman Testing Guide
+
+### Setting Up Postman for API Testing
+
+#### 1. Create a New Collection
+1. Open Postman
+2. Click "New" → "Collection"
+3. Name it "DeafSo Teacher API"
+4. Add description: "API testing for teacher subject management"
+
+#### 2. Set Up Environment Variables
+1. Click "Environments" → "New Environment"
+2. Name it "DeafSo Local"
+3. Add these variables:
+   - `base_url`: `http://localhost:3000/api/v1`
+   - `teacher_token`: `your_jwt_token_here`
+   - `student_token`: `your_student_jwt_token_here`
+
+#### 3. Authentication Setup
+1. In your collection, go to "Authorization" tab
+2. Set Type to "Bearer Token"
+3. Set Token to: `{{teacher_token}}`
+
+#### 4. Understanding teacherId
+**Important**: The `teacherId` is automatically handled by the system:
+- When you include the JWT token in the Authorization header, the system automatically extracts the teacher's ID
+- You do NOT need to pass `teacherId` in the request body
+- The system automatically associates subjects with the authenticated teacher
+- This ensures security - teachers can only create subjects for themselves
+
+### Postman Request Examples
+
+#### 1. Teacher Login (Get Token)
+**Request:**
+- Method: `POST`
+- URL: `{{base_url}}/teacher/login`
+- Headers: `Content-Type: application/json`
+- Body (raw JSON):
+```json
+{
+  "email": "teacher@example.com",
+  "password": "password123"
+}
 ```
 
 **Response:**
 ```json
 {
-  "status": "OK",
-  "message": "DeafSo Backend API is running",
-  "timestamp": "2025-08-07T17:02:07.900Z"
+  "success": true,
+  "message": "Teacher logged in successfully",
+  "data": {
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "teacher": {
+      "id": 1,
+      "fullname": "John Doe",
+      "email": "teacher@example.com"
+    }
+  }
 }
-``` 
+```
+
+**Steps:**
+1. Copy the token from response
+2. Update environment variable `teacher_token` with this value
+
+#### 2. Add New Subject (Mathematics)
+**Request:**
+- Method: `POST`
+- URL: `{{base_url}}/teacher/subjects`
+- Headers: 
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {{teacher_token}}`
+- Body (raw JSON):
+```json
+{
+  "subjectName": "Mathematics",
+  "standard": "10",
+  "division": "A",
+  "duration": 60,
+  "content": "Advanced mathematics concepts including algebra, geometry, and trigonometry. Topics covered: Quadratic equations, coordinate geometry, trigonometry, statistics, and probability."
+}
+```
+
+**Note**: The `teacherId` is automatically extracted from the JWT token. You do NOT need to include it in the request body.
+
+#### 3. Add New Subject (Physics)
+**Request:**
+- Method: `POST`
+- URL: `{{base_url}}/teacher/subjects`
+- Headers: 
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {{teacher_token}}`
+- Body (raw JSON):
+```json
+{
+  "subjectName": "Physics",
+  "standard": "12",
+  "division": "B",
+  "duration": 75,
+  "content": "Advanced physics concepts including mechanics, thermodynamics, electromagnetism, and modern physics. Practical experiments and problem-solving exercises included."
+}
+```
+
+#### 4. Add New Subject (English Literature)
+**Request:**
+- Method: `POST`
+- URL: `{{base_url}}/teacher/subjects`
+- Headers: 
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {{teacher_token}}`
+- Body (raw JSON):
+```json
+{
+  "subjectName": "English Literature",
+  "standard": "11",
+  "division": "C",
+  "duration": 45,
+  "content": "Study of classic and contemporary literature. Reading comprehension, essay writing, poetry analysis, and creative writing skills development."
+}
+```
+
+#### 5. Add New Subject (Computer Science)
+**Request:**
+- Method: `POST`
+- URL: `{{base_url}}/teacher/subjects`
+- Headers: 
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {{teacher_token}}`
+- Body (raw JSON):
+```json
+{
+  "subjectName": "Computer Science",
+  "standard": "9",
+  "division": "A",
+  "duration": 90,
+  "content": "Introduction to programming concepts, algorithms, data structures, and software development. Hands-on coding projects and problem-solving exercises."
+}
+```
+
+#### 6. Add New Subject (Minimal Fields)
+**Request:**
+- Method: `POST`
+- URL: `{{base_url}}/teacher/subjects`
+- Headers: 
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {{teacher_token}}`
+- Body (raw JSON):
+```json
+{
+  "subjectName": "Geography",
+  "standard": "6",
+  "division": "B"
+}
+```
+
+### Other Teacher API Endpoints
+
+#### 7. Get All Teacher's Subjects
+**Request:**
+- Method: `GET`
+- URL: `{{base_url}}/teacher/subjects`
+- Headers: `Authorization: Bearer {{teacher_token}}`
+
+#### 8. Get Specific Subject
+**Request:**
+- Method: `GET`
+- URL: `{{base_url}}/teacher/subjects/1`
+- Headers: `Authorization: Bearer {{teacher_token}}`
+
+#### 9. Update Subject
+**Request:**
+- Method: `PUT`
+- URL: `{{base_url}}/teacher/subjects/1`
+- Headers: 
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {{teacher_token}}`
+- Body (raw JSON):
+```json
+{
+  "subjectName": "Advanced Mathematics",
+  "duration": 90,
+  "content": "Updated content with more advanced topics and practical examples."
+}
+```
+
+#### 10. Delete Subject
+**Request:**
+- Method: `DELETE`
+- URL: `{{base_url}}/teacher/subjects/1`
+- Headers: `Authorization: Bearer {{teacher_token}}`
+
+### Postman Testing Workflow
+
+#### Step 1: Teacher Authentication
+1. Create "Teacher Login" request
+2. Send request with teacher credentials
+3. Copy token from response
+4. Update `teacher_token` environment variable
+
+#### Step 2: Add Subjects
+1. Create "Add Mathematics Subject" request
+2. Send request
+3. Verify 201 status code and response
+4. Repeat for other subjects
+
+#### Step 3: Test Other Operations
+1. Get all subjects
+2. Get specific subject by ID
+3. Update a subject
+4. Delete a subject
+
+### Error Testing in Postman
+
+#### 1. Missing Authentication
+**Request:**
+- Method: `POST`
+- URL: `{{base_url}}/teacher/subjects`
+- Headers: `Content-Type: application/json`
+- Body: Same as above (no Authorization header)
+
+**Expected Response (401):**
+```json
+{
+  "success": false,
+  "message": "Access denied. No token provided."
+}
+```
+
+#### 2. Invalid Token
+**Request:**
+- Method: `POST`
+- URL: `{{base_url}}/teacher/subjects`
+- Headers: 
+  - `Content-Type: application/json`
+  - `Authorization: Bearer invalid_token_here`
+- Body: Same as above
+
+**Expected Response (401):**
+```json
+{
+  "success": false,
+  "message": "Invalid token."
+}
+```
+
+#### 3. Missing Required Fields
+**Request:**
+- Method: `POST`
+- URL: `{{base_url}}/teacher/subjects`
+- Headers: 
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {{teacher_token}}`
+- Body (raw JSON):
+```json
+{
+  "subjectName": "Mathematics",
+  "standard": "10"
+}
+```
+
+**Expected Response (400):**
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "division",
+      "message": "Division must be between 1 and 5 characters"
+    }
+  ]
+}
+```
+
+#### 4. Duplicate Subject
+**Request:**
+- Method: `POST`
+- URL: `{{base_url}}/teacher/subjects`
+- Headers: 
+  - `Content-Type: application/json`
+  - `Authorization: Bearer {{teacher_token}}`
+- Body (raw JSON):
+```json
+{
+  "subjectName": "Mathematics",
+  "standard": "10",
+  "division": "A"
+}
+```
+
+**Expected Response (400):**
+```json
+{
+  "success": false,
+  "message": "Subject already exists for this standard and division"
+}
+```
+
+### Postman Collection Export
+
+You can save this as a Postman collection file (JSON) and import it:
+
+```json
+{
+  "info": {
+    "name": "DeafSo Teacher API",
+    "description": "API testing for teacher subject management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api/v1"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{teacher_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Teacher Login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"teacher@example.com\",\n  \"password\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/teacher/login",
+          "host": ["{{base_url}}"],
+          "path": ["teacher", "login"]
+        }
+      }
+    },
+    {
+      "name": "Add Mathematics Subject",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"subjectName\": \"Mathematics\",\n  \"standard\": \"10\",\n  \"division\": \"A\",\n  \"duration\": 60,\n  \"content\": \"Advanced mathematics concepts including algebra, geometry, and trigonometry.\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/teacher/subjects",
+          "host": ["{{base_url}}"],
+          "path": ["teacher", "subjects"]
+        }
+      }
+    }
+  ]
+}
+```
+
+### Tips for Postman Testing
+
+1. **Use Environment Variables**: Set up variables for base URL and tokens
+2. **Save Responses**: Use Postman's "Save Response" feature to store successful responses
+3. **Test Scripts**: Add test scripts to validate responses automatically
+4. **Pre-request Scripts**: Use to set up dynamic values
+5. **Collection Runner**: Run multiple requests in sequence
+6. **Environment Switching**: Create different environments for dev/staging/prod
+
+### Example Test Script
+
+Add this to your requests to validate responses:
+
+```javascript
+// Test script for Add Subject
+pm.test("Status code is 201", function () {
+    pm.response.to.have.status(201);
+});
+
+pm.test("Response has success true", function () {
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.success).to.eql(true);
+});
+
+pm.test("Subject name is correct", function () {
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.data.subjectName).to.eql("Mathematics");
+});
+
+pm.test("Teacher ID is present", function () {
+    var jsonData = pm.response.json();
+    pm.expect(jsonData.data.teacher.id).to.be.a('number');
+});
+```
+
+This comprehensive Postman guide should help you test all the teacher subject API endpoints effectively! 
