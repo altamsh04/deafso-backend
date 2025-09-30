@@ -25,21 +25,6 @@ CREATE TABLE IF NOT EXISTS teachers (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Subjects table
-CREATE TABLE IF NOT EXISTS subjects (
-    id SERIAL PRIMARY KEY,
-    "subjectName" VARCHAR(255) NOT NULL,
-    standard VARCHAR(10) NOT NULL,
-    division VARCHAR(5) NOT NULL,
-    duration INTEGER NOT NULL DEFAULT 0,
-    views INTEGER NOT NULL DEFAULT 0,
-    content TEXT,
-    teacher_id INTEGER,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (teacher_id) REFERENCES teachers(id) ON DELETE SET NULL,
-    UNIQUE("subjectName", standard, division)
-);
 
 -- Student sessions table for JWT token management
 CREATE TABLE IF NOT EXISTS student_sessions (
@@ -68,8 +53,6 @@ CREATE INDEX IF NOT EXISTS idx_students_standard_division ON students(standard, 
 
 CREATE INDEX IF NOT EXISTS idx_teachers_email ON teachers(email);
 
-CREATE INDEX IF NOT EXISTS idx_subjects_standard_division ON subjects(standard, division);
-CREATE INDEX IF NOT EXISTS idx_subjects_subject_name ON subjects("subjectName");
 
 CREATE INDEX IF NOT EXISTS idx_student_sessions_student_id ON student_sessions(student_id);
 CREATE INDEX IF NOT EXISTS idx_student_sessions_token ON student_sessions(token);
@@ -93,8 +76,4 @@ CREATE TRIGGER update_students_updated_at
 
 CREATE TRIGGER update_teachers_updated_at 
     BEFORE UPDATE ON teachers 
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_subjects_updated_at 
-    BEFORE UPDATE ON subjects 
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

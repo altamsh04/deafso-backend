@@ -54,67 +54,6 @@ Content-Type: application/json
 }
 ```
 
-### 2. Get Student Subjects
-**Endpoint:** `GET /student/subjects/:standard/:division`
-
-Retrieve all subjects available for a specific standard and division.
-
-**Headers:**
-```
-Authorization: Bearer <student_jwt_token>
-Content-Type: application/json
-```
-
-**Response (200 OK):**
-```json
-{
-  "success": true,
-  "message": "Subjects retrieved successfully",
-  "data": [
-    {
-      "id": 1,
-      "subjectName": "Mathematics",
-      "standard": "10",
-      "division": "A",
-      "duration": 60,
-      "content": "Advanced mathematics concepts including algebra, geometry, and trigonometry.",
-      "views": 150,
-      "teacher": {
-        "id": 1,
-        "fullname": "Jane Smith",
-        "email": "jane.smith@teacher.com"
-      },
-      "created_at": "2024-01-15T10:30:00.000Z",
-      "updated_at": "2024-01-15T10:30:00.000Z"
-    },
-    {
-      "id": 2,
-      "subjectName": "Physics",
-      "standard": "10",
-      "division": "A",
-      "duration": 75,
-      "content": "Advanced physics concepts including mechanics and thermodynamics.",
-      "views": 89,
-      "teacher": {
-        "id": 2,
-        "fullname": "Mike Johnson",
-        "email": "mike.johnson@teacher.com"
-      },
-      "created_at": "2024-01-15T11:30:00.000Z",
-      "updated_at": "2024-01-15T11:30:00.000Z"
-    }
-  ],
-  "count": 2
-}
-```
-
-**Error Response (404 Not Found):**
-```json
-{
-  "success": false,
-  "message": "No subjects found for this standard and division"
-}
-```
 
 ## Field Validation Rules
 

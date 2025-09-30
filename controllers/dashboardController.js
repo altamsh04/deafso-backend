@@ -52,69 +52,6 @@ const getStudentProfile = async (req, res) => {
   }
 };
 
-// Get Subjects for Student (with proper JOINs)
-const getStudentSubjects = async (req, res) => {
-  try {
-    const { standard, division } = req.params;
-
-    // Get subjects with teacher information using Prisma relations
-    const subjects = await prisma.subject.findMany({
-      where: {
-        standard: standard,
-        division: division
-      },
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            fullname: true,
-            email: true
-          }
-        }
-      },
-      orderBy: {
-        subjectName: 'asc'
-      }
-    });
-
-    if (subjects.length === 0) {
-      return res.status(200).json({
-        success: true,
-        message: 'No subjects found for this standard and division',
-        data: []
-      });
-    }
-
-    // Format the response
-    const formattedSubjects = subjects.map(subject => ({
-      id: subject.id,
-      subjectName: subject.subjectName,
-      duration: subject.duration,
-      views: subject.views,
-      content: subject.content,
-      teacher: subject.teacher ? {
-        id: subject.teacher.id,
-        name: subject.teacher.fullname,
-        email: subject.teacher.email
-      } : null,
-      created_at: subject.createdAt,
-      updated_at: subject.updatedAt
-    }));
-
-    res.status(200).json({
-      success: true,
-      message: 'Subjects retrieved successfully',
-      data: formattedSubjects,
-      count: formattedSubjects.length
-    });
-  } catch (error) {
-    console.error('Get student subjects error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-};
 
 // Get Teacher Profile (additional endpoint)
 const getTeacherProfile = async (req, res) => {
@@ -141,25 +78,6 @@ const getTeacherProfile = async (req, res) => {
       });
     }
 
-    // Get subjects taught by this teacher
-    const subjects = await prisma.subject.findMany({
-      where: { teacherId: parseInt(teacherID) },
-      select: {
-        id: true,
-        subjectName: true,
-        standard: true,
-        division: true,
-        duration: true,
-        views: true,
-        createdAt: true
-      },
-      orderBy: [
-        { standard: 'asc' },
-        { division: 'asc' },
-        { subjectName: 'asc' }
-      ]
-    });
-
     res.status(200).json({
       success: true,
       message: 'Teacher profile retrieved successfully',
@@ -169,11 +87,7 @@ const getTeacherProfile = async (req, res) => {
         email: teacher.email,
         mobile: teacher.mobile,
         created_at: teacher.createdAt,
-        updated_at: teacher.updatedAt,
-        subjects: subjects.map(subject => ({
-          ...subject,
-          created_at: subject.createdAt
-        }))
+        updated_at: teacher.updatedAt
       }
     });
   } catch (error) {
@@ -226,74 +140,8 @@ const getStudentsInClass = async (req, res) => {
   }
 };
 
-// Get Subject Details with Student Count (additional endpoint)
-const getSubjectDetails = async (req, res) => {
-  try {
-    const { subjectId } = req.params;
-
-    // Get subject details with teacher info and student count
-    const subject = await prisma.subject.findUnique({
-      where: { id: parseInt(subjectId) },
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            fullname: true,
-            email: true
-          }
-        }
-      }
-    });
-
-    if (!subject) {
-      return res.status(404).json({
-        success: false,
-        message: 'Subject not found'
-      });
-    }
-
-    // Get student count for this class
-    const studentCount = await prisma.student.count({
-      where: {
-        standard: subject.standard,
-        division: subject.division
-      }
-    });
-
-    res.status(200).json({
-      success: true,
-      message: 'Subject details retrieved successfully',
-      data: {
-        id: subject.id,
-        subjectName: subject.subjectName,
-        standard: subject.standard,
-        division: subject.division,
-        duration: subject.duration,
-        views: subject.views,
-        content: subject.content,
-        teacher: subject.teacher ? {
-          id: subject.teacher.id,
-          name: subject.teacher.fullname,
-          email: subject.teacher.email
-        } : null,
-        student_count: studentCount,
-        created_at: subject.createdAt,
-        updated_at: subject.updatedAt
-      }
-    });
-  } catch (error) {
-    console.error('Get subject details error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error'
-    });
-  }
-};
-
 module.exports = {
   getStudentProfile,
-  getStudentSubjects,
   getTeacherProfile,
-  getStudentsInClass,
-  getSubjectDetails
+  getStudentsInClass
 }; 

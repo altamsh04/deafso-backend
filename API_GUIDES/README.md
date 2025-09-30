@@ -21,38 +21,11 @@ Welcome to the comprehensive API documentation for the DeafSo Backend system. Th
 ### 2. [Student API Guide](./02_Student_API.md)
 **Covers:** All student-related endpoints
 - Student profile management
-- Subject access for students
 - Authorization and security
 
 **Key Endpoints:**
 - `GET /student/profile/:studentID` - Get student profile
-- `GET /student/subjects/:standard/:division` - Get subjects by standard/division
 
-### 3. [Teacher API Guide](./03_Teacher_API.md)
-**Covers:** All teacher-related endpoints including subject management
-- Subject CRUD operations
-- Teacher authorization
-- Understanding teacherId
-
-**Key Endpoints:**
-- `POST /teacher/subjects` - Add new subject
-- `GET /teacher/subjects` - Get teacher's subjects
-- `GET /teacher/subjects/:subjectId` - Get specific subject
-- `PUT /teacher/subjects/:subjectId` - Update subject
-- `DELETE /teacher/subjects/:subjectId` - Delete subject
-
-### 4. [Subject API Guide](./04_Subject_API.md)
-**Covers:** Comprehensive subject management
-- Subject data model
-- Field validation rules
-- Examples by category
-- Database schema
-
-**Features:**
-- Complete subject examples
-- Validation rules
-- Error handling
-- Security features
 
 ## 🚀 Quick Start
 
@@ -73,17 +46,6 @@ curl -X POST http://localhost:3000/api/v1/teacher/login \
 Include the JWT token in subsequent requests:
 
 ```bash
-# Add a subject (Teacher only)
-curl -X POST http://localhost:3000/api/v1/teacher/subjects \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "subjectName": "Mathematics",
-    "standard": "10",
-    "division": "A",
-    "duration": 60,
-    "content": "Advanced mathematics concepts..."
-  }'
 ```
 
 ## 🔐 Authentication
@@ -149,8 +111,6 @@ Each guide includes comprehensive cURL examples for testing.
 
 ### Authorization
 - Role-based access control
-- Teachers can only modify their own subjects
-- Students can view subjects for any standard/division
 
 ### Data Protection
 - Input validation and sanitization
@@ -162,7 +122,6 @@ Each guide includes comprehensive cURL examples for testing.
 ### Key Tables
 - **students**: Student information
 - **teachers**: Teacher information
-- **subjects**: Subject data with teacher relationships
 - **student_sessions**: Student authentication sessions
 - **teacher_sessions**: Teacher authentication sessions
 

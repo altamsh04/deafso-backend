@@ -168,40 +168,12 @@ A comprehensive REST API for the DeafSo educational platform with JWT authentica
   }
   ```
 
-**Get Student Subjects**
-- **GET** `/api/v1/student/subjects/:standard/:division`
-- **Description**: Get all subjects for a specific class with teacher information
-- **Headers:** `Authorization: Bearer <token>`
-- **Response:**
-  ```json
-  {
-    "success": true,
-    "message": "Subjects retrieved successfully",
-    "data": [
-      {
-        "id": 1,
-        "subjectName": "Mathematics",
-        "duration": 45,
-        "views": 150,
-        "content": "Advanced mathematics concepts including algebra and geometry",
-        "teacher": {
-          "id": 1,
-          "name": "John Doe",
-          "email": "john.doe@deafso.com"
-        },
-        "created_at": "2024-01-01T00:00:00.000Z",
-        "updated_at": "2024-01-01T00:00:00.000Z"
-      }
-    ],
-    "count": 1
-  }
-  ```
 
 #### Teacher Dashboard
 
 **Get Teacher Profile**
 - **GET** `/api/v1/teacher/profile/:teacherID`
-- **Description**: Retrieve teacher profile with subjects they teach
+- **Description**: Retrieve teacher profile information
 - **Headers:** `Authorization: Bearer <token>`
 - **Response:**
   ```json
@@ -214,18 +186,7 @@ A comprehensive REST API for the DeafSo educational platform with JWT authentica
       "email": "jane@example.com",
       "mobile": "9876543211",
       "created_at": "2024-01-01T00:00:00.000Z",
-      "updated_at": "2024-01-01T00:00:00.000Z",
-      "subjects": [
-        {
-          "id": 1,
-          "subjectName": "Mathematics",
-          "standard": "10",
-          "division": "A",
-          "duration": 45,
-          "views": 150,
-          "created_at": "2024-01-01T00:00:00.000Z"
-        }
-      ]
+      "updated_at": "2024-01-01T00:00:00.000Z"
     }
   }
   ```
@@ -237,10 +198,6 @@ A comprehensive REST API for the DeafSo educational platform with JWT authentica
 - **Description**: Get all students in a specific class
 - **Response:** List of students with basic information
 
-**Get Subject Details**
-- **GET** `/api/v1/subject/:subjectId`
-- **Description**: Get detailed subject information with teacher and student count
-- **Response:** Subject details with teacher info and class statistics
 
 **Logout**
 - **POST** `/api/v1/student/logout` or `/api/v1/teacher/logout`
@@ -332,9 +289,6 @@ curl -X POST http://localhost:3000/api/v1/student/login \
 curl -X GET http://localhost:3000/api/v1/student/profile/1 \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 
-# Get subjects for class 10A
-curl -X GET http://localhost:3000/api/v1/student/subjects/10/A \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
 ```
 
 ### Testing with Postman

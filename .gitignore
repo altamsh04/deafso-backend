@@ -67,6 +67,7 @@ build/
 *.temp
 tmp/
 temp/
+uploads/
 
 # ========================================
 # IDE & Editor Files
@@ -104,6 +105,9 @@ desktop.ini
 # ========================================
 # Note: We want to track schema.prisma but not generated client
 # The client will be generated during build/deployment
+node_modules/.prisma/
+prisma/migrations/**/migration.sql
+!prisma/migrations/migration_lock.toml
 
 # ========================================
 # PM2 Files

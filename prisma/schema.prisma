@@ -42,31 +42,9 @@ model Teacher {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  subjects Subject[]
   sessions TeacherSession[]
+  subjects Subject[]
   @@map("teachers")
-}
-
-model Subject {
-  id          Int      @id @default(autoincrement())
-  subjectName String   @map("subjectName")
-  standard    String
-  division    String
-  duration    Int      @default(0)
-  views       Int      @default(0)
-  content     String?
-  teacherId   Int?     @map("teacher_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  // Relations
-  teacher Teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-
-  // Indexes
-  @@index([standard, division])
-  @@index([subjectName])
-  @@unique([subjectName, standard, division])
-  @@map("subjects")
 }
 
 model StudentSession {
@@ -99,4 +77,26 @@ model TeacherSession {
   @@index([teacherId])
   @@index([token])
   @@map("teacher_sessions")
+}
+
+model Subject {
+  id             Int      @id @default(autoincrement())
+  subjectId      Int      @unique @default(autoincrement()) @map("subject_id")
+  subjectName    String   @map("subject_name")
+  subjectContent String   @map("subject_content")
+  subjectVectors String   @map("subject_vectors")
+  division       String
+  standard       String
+  teacherId      Int      @map("teacher_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  teacher Teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([teacherId])
+  @@index([subjectId])
+  @@index([standard, division])
+  @@map("subjects")
 } 
