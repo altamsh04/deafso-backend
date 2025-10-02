@@ -209,8 +209,41 @@ const findMostRelevantChunks = (vectors, queryEmbedding, topK = 3) => {
   return similarities.slice(0, topK);
 };
 
+const getStudentSubjects = async (req, res) => {
+  try {
+    const { division, standard } = req.body;
+
+    const subjects = await prisma.subject.findMany({
+      where: {
+        division,
+        standard
+      },
+      select: {
+        subjectId: true,
+        subjectName: true,
+        division: true,
+        standard: true,
+        createdAt: true
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: subjects
+    });
+  } catch (error) {
+    console.error('Error fetching student subjects:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   addSubject,
   chatWithSubject,
-  upload
+  upload,
+  getStudentSubjects
 };

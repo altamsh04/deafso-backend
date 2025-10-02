@@ -1,6 +1,6 @@
 const express = require('express');
 const { body } = require('express-validator');
-const { addSubject, chatWithSubject, upload } = require('../controllers/subjectController');
+const { addSubject, chatWithSubject, upload, getStudentSubjects } = require('../controllers/subjectController');
 const { authenticateTeacher, authenticateStudent } = require('../middleware/authMiddleware');
 const { validateRequest } = require('../middleware/validationMiddleware');
 
@@ -22,6 +22,20 @@ const addSubjectValidation = [
     .withMessage('Subject name is required')
     .isString()
     .withMessage('Subject name must be a string')
+];
+
+//student subject
+const getSubjectsValidation = [
+  body('division')
+    .notEmpty()
+    .withMessage('Division is required')
+    .isString()
+    .withMessage('Division must be a string'),
+  body('standard')
+    .notEmpty()
+    .withMessage('Standard is required')
+    .isString()
+    .withMessage('Standard must be a string')
 ];
 
 const chatValidation = [
@@ -52,6 +66,13 @@ router.post('/chat',
   chatValidation,
   validateRequest,
   chatWithSubject
+);
+
+router.post('/get-student-subjects',
+  authenticateStudent,
+  getSubjectsValidation,
+  validateRequest,
+  getStudentSubjects
 );
 
 module.exports = router;
