@@ -260,5 +260,5 @@ module.exports = {
   chatWithSubject,
   upload,
   getStudentSubjects,
-   getSubjectMaterial
+  getSubjectMaterial
 };
