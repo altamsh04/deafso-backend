@@ -75,4 +75,25 @@ router.post('/get-student-subjects',
   getStudentSubjects
 );
 
+router.get('/:subjectId/material',
+  authenticateStudent,
+  async (req, res) => {
+    const { subjectId } = req.params;
+    try {
+      const subject = await require('../controllers/subjectController').getSubjectMaterial(subjectId);
+      console.log("subject"+subject);
+      
+      if (!subject) {
+        return res.status(404).json({ success: false, message: 'Subject not found' });
+      }
+      // Always send a JSON response
+      return res.status(200).json({ success: true, data: subject });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: 'Internal server error', error: error.message });
+    }
+  }
+);
+
+
+
 module.exports = router;

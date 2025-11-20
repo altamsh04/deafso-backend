@@ -241,9 +241,24 @@ const getStudentSubjects = async (req, res) => {
   }
 };
 
+const getSubjectMaterial = async (subjectId) => {
+  const subject = await prisma.subject.findUnique({
+    where: { subjectId: parseInt(subjectId) },
+    select: {
+      // subjectId: true,
+      // subjectName: true,
+      // division: true,
+      // standard: true,
+      subjectContent: true
+    }
+  });
+  return subject;
+};
+
 module.exports = {
   addSubject,
   chatWithSubject,
   upload,
-  getStudentSubjects
+  getStudentSubjects,
+  getSubjectMaterial
 };
